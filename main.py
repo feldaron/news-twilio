@@ -1,10 +1,11 @@
 from flask import Flask, request, Response
 import requests
 import xml.etree.ElementTree as ET
+import os
 
 app = Flask(__name__)
 
-# News sources
+# Available news sources
 SOURCES = {
     "1": ("BBC News", "http://feeds.bbci.co.uk/news/rss.xml"),
     "2": ("The Guardian", "https://www.theguardian.com/uk/rss"),
@@ -19,10 +20,10 @@ def voice():
     <Response>
         <Gather numDigits="1" action="/handle-source" method="POST">
             <Say voice="alice" language="en-GB">
-                Welcome to the news hotline. 
-                Press 1 for BBC News. 
-                Press 2 for the Guardian. 
-                Press 3 for Sky News. 
+                Welcome to the news hotline.
+                Press 1 for BBC News.
+                Press 2 for the Guardian.
+                Press 3 for Sky News.
                 Press 4 for Ynet News.
             </Say>
         </Gather>
@@ -42,8 +43,8 @@ def handle_source():
     <Response>
         <Gather numDigits="1" action="/read-news?src={digit}" method="POST">
             <Say voice="alice" language="en-GB">
-                You selected {SOURCES[digit][0]}. 
-                Press 1 for headlines only. 
+                You selected {SOURCES[digit][0]}.
+                Press 1 for headlines only.
                 Press 2 for headlines with descriptions.
             </Say>
         </Gather>
@@ -84,3 +85,8 @@ def read_news():
   </Say>
 </Response>"""
     return Response(xml, mimetype='text/xml')
+
+# Ensure it works on Render (bind to correct port)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
