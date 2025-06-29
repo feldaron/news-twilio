@@ -7,14 +7,17 @@ app = Flask(__name__)
 
 @app.route("/bbc", methods=["GET"])
 def bbc_news():
+    text = "Sorry, I couldn't load the news right now."
+
     try:
         rss = requests.get("http://feeds.bbci.co.uk/news/rss.xml", timeout=5)
         root = ET.fromstring(rss.content)
         items = root.findall(".//item")[:3]
         headlines = [item.find("title").text for item in items]
-        text = "Here are today's top headlines from BBC News. " + " ".join(headlines)
-    except Exception:
-        text = "Sorry, I couldn't load the news right now."
+        if headlines:
+            text = "Here are today's top headlines from BBC News. " + " ".join(headlines)
+    except Exception as e:
+        print("Error fetching news:", e)
 
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
