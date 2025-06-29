@@ -16,7 +16,7 @@ def bbc_news():
         headlines = [item.find("title").text for item in items]
 
         # Add pause between headlines using SSML <break>
-        ssml_headlines = "<break time='700ms'/>".join(
+        ssml_headlines = "<break time='900ms'/>".join(
             [f"<p>{h}</p>" for h in headlines]
         )
 
