@@ -19,7 +19,7 @@ def voice():
     menu = """
     <Response>
         <Gather numDigits="1" action="/handle-source" method="POST">
-            <Say voice="Polly.Amy" language="en-GB">
+            <Say>
                 Welcome to the news hotline.
                 Press 1 for BBC News.
                 Press 2 for the Guardian.
@@ -27,7 +27,7 @@ def voice():
                 Press 4 for Ynet News.
             </Say>
         </Gather>
-        <Say voice="Polly.Amy" language="en-GB">We didn't receive any input. Goodbye.</Say>
+        <Say>We didn't receive any input. Goodbye.</Say>
     </Response>
     """
     return Response(menu, mimetype="text/xml")
@@ -36,19 +36,19 @@ def voice():
 def handle_source():
     digit = request.form.get("Digits")
     if digit not in SOURCES:
-        return Response("""<Response><Say voice="Polly.Amy" language="en-GB">Invalid choice. Goodbye.</Say></Response>""", mimetype="text/xml")
+        return Response("""<Response><Say>Invalid choice. Goodbye.</Say></Response>""", mimetype="text/xml")
     
     # Ask if user wants descriptions
     prompt = f"""
     <Response>
         <Gather numDigits="1" action="/read-news?src={digit}" method="POST">
-            <Say voice="Polly.Amy" language="en-GB">
+            <Say>
                 You selected {SOURCES[digit][0]}.
                 Press 1 for headlines only.
                 Press 2 for headlines with descriptions.
             </Say>
         </Gather>
-        <Say voice="Polly.Amy" language="en-GB">We didn't receive any input. Goodbye.</Say>
+        <Say>We didn't receive any input. Goodbye.</Say>
     </Response>
     """
     return Response(prompt, mimetype="text/xml")
@@ -80,7 +80,7 @@ def read_news():
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Amy" language="en-GB">
+  <Say>
     <speak><prosody rate="slow">{speech}</prosody></speak>
   </Say>
 </Response>"""
