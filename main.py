@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-@app.route("/bbc", methods=["GET"])
+@app.route("/bbc", methods=["GET", "POST"])
 def bbc_news():
     text = "Sorry, I couldn't load the news right now."
 
