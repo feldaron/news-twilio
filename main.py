@@ -12,16 +12,31 @@ def bbc_news():
     try:
         rss = requests.get("http://feeds.bbci.co.uk/news/rss.xml", timeout=5)
         root = ET.fromstring(rss.content)
-        items = root.findall(".//item")[:3]
+        items = root.findall(".//item")[:10]  # Read top 10 headlines
         headlines = [item.find("title").text for item in items]
-        if headlines:
-            text = "Here are today's top headlines from BBC News. " + " ".join(headlines)
+
+        # Add pause between headlines using SSML <break>
+        ssml_headlines = "<break time='700ms'/>".join(
+            [f"<p>{h}</p>" for h in headlines]
+        )
+
+        # Wrap in full SSML to control speaking rate
+        text = f"""
+        <speak>
+          <prosody rate="slow">
+            Here are today's top headlines from BBC News.
+            <break time="800ms"/>
+            {ssml_headlines}
+          </prosody>
+        </speak>
+        """
     except Exception as e:
         print("Error fetching news:", e)
+        text = "<speak><prosody rate='slow'>Sorry, I couldn't load the news right now.</prosody></speak>"
 
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">{text}</Say>
+  <Say voice="alice" language="en-GB">{text}</Say>
 </Response>"""
     return Response(twiml, mimetype='text/xml')
 
