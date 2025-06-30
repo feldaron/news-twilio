@@ -10,7 +10,7 @@ SOURCES = {
     "1": ("BBC News", "http://feeds.bbci.co.uk/news/rss.xml"),
     "2": ("The Guardian", "https://www.theguardian.com/uk/rss"),
     "3": ("Sky News", "https://feeds.skynews.com/feeds/rss/home.xml"),
-    "4": ("Jerusalem Post", "https://www.jpost.com/RSS/RSSFeedsHeadlines.aspx")
+    "4": ("Jerusalem Post", "https://www.jpost.com/RSS/RSSFeedsHeadlines.aspx"),
     "5": ("Arutz Sheva", "https://www.israelnationalnews.com/rss.xml")
 }
 
