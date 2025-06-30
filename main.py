@@ -13,24 +13,45 @@ SOURCES = {
     "4": ("Ynet News", "https://www.ynetnews.com/category/3082/rss")
 }
 
-@app.route("/voice", methods=["GET", "POST"])
-def voice():
-    # Main menu
-    menu = """
-    <Response>
-        <Gather numDigits="1" action="/handle-source" method="POST">
-            <Say voice="Polly.Amy" language="en-GB">
-                Welcome to the news hotline.
-                Press 1 for BBC News.
-                Press 2 for the Guardian.
-                Press 3 for Sky News.
-                Press 4 for Ynet News.
-            </Say>
-        </Gather>
-        <Say voice="Polly.Amy" language="en-GB">We didn't receive any input. Goodbye.</Say>
-    </Response>
-    """
-    return Response(menu, mimetype="text/xml")
+@app.route("/read-news", methods=["GET", "POST"])
+def read_news():
+    digit = request.args.get("src")
+    with_desc = request.form.get("Digits") == "2"
+
+    name, url = SOURCES.get(digit, ("Unknown", None))
+    try:
+        rss = requests.get(url, timeout=5)
+        root = ET.fromstring(rss.content)
+        items = root.findall(".//item")[:10]
+
+        # Construct plain text speech (Polly voice will still sound natural)
+        speech_lines = [f"{name}. Latest headlines."]
+        for item in items:
+            title = item.find("title").text or ""
+            desc = item.find("description").text or ""
+            title = title.replace("&", "and")
+            desc = desc.replace("&", "and")
+
+            segment = title
+            if with_desc:
+                segment += ". " + desc
+            speech_lines.append(segment)
+
+        # Insert pauses manually (Polly will interpret periods as breaks)
+        speech = ". ".join(speech_lines)
+
+    except Exception as e:
+        print("News error:", e)
+        speech = "Sorry, that feed could not be loaded."
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Amy" language="en-GB">
+    {speech}
+  </Say>
+</Response>"""
+
+    return Response(xml, mimetype='text/xml')
 
 @app.route("/handle-source", methods=["POST"])
 def handle_source():
