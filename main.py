@@ -13,106 +13,88 @@ SOURCES = {
     "4": ("Ynet News", "https://www.ynetnews.com/category/3082/rss")
 }
 
+@app.route("/voice", methods=["GET", "POST"])
+def voice():
+    menu = """
+    <Response>
+        <Gather numDigits="1" action="/handle-source" method="POST">
+            <Say language="en-GB">
+                Welcome to the news hotline.
+                Press 1 for BBC News.
+                Press 2 for the Guardian.
+                Press 3 for Sky News.
+                Press 4 for Ynet News.
+            </Say>
+        </Gather>
+        <Say language="en-GB">We didn't receive any input. Goodbye.</Say>
+    </Response>
+    """
+    return Response(menu, mimetype="text/xml")
+
+@app.route("/handle-source", methods=["POST"])
+def handle_source():
+    digit = request.form.get("Digits")
+    if digit not in SOURCES:
+        return Response("""<Response><Say language="en-GB">Invalid choice. Goodbye.</Say></Response>""", mimetype="text/xml")
+    
+    prompt = f"""
+    <Response>
+        <Gather numDigits="1" action="/read-news?src={digit}" method="POST">
+            <Say language="en-GB">
+                You selected {SOURCES[digit][0]}.
+                Press 1 for headlines only.
+                Press 2 for headlines with descriptions.
+            </Say>
+        </Gather>
+        <Say language="en-GB">We didn't receive any input. Goodbye.</Say>
+    </Response>
+    """
+    return Response(prompt, mimetype="text/xml")
+
 @app.route("/read-news", methods=["GET", "POST"])
 def read_news():
     digit = request.args.get("src")
     with_desc = request.form.get("Digits") == "2"
 
     name, url = SOURCES.get(digit, ("Unknown", None))
+    speech_lines = [f"You selected {name}. Here are the latest headlines."]
+
     try:
         rss = requests.get(url, timeout=5)
         root = ET.fromstring(rss.content)
         items = root.findall(".//item")[:10]
 
-        # Construct plain text speech (Polly voice will still sound natural)
-        speech_lines = [f"{name}. Latest headlines."]
         for item in items:
-            title = item.find("title").text or ""
-            desc = item.find("description").text or ""
-            title = title.replace("&", "and")
-            desc = desc.replace("&", "and")
+            try:
+                title = item.find("title").text or ""
+                desc = item.find("description").text or ""
+            except:
+                continue
 
+            # Clean & format
+            title = title.replace("&", "and").strip()
+            desc = desc.replace("&", "and").strip()
             segment = title
             if with_desc:
                 segment += ". " + desc
             speech_lines.append(segment)
-
-        # Insert pauses manually (Polly will interpret periods as breaks)
-        speech = ". ".join(speech_lines)
-
     except Exception as e:
         print("News error:", e)
-        speech = "Sorry, that feed could not be loaded."
+        speech_lines = ["Sorry, the news feed could not be loaded."]
+
+    # Join headlines with pauses (via punctuation)
+    speech = ".  ".join(speech_lines)
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Amy" language="en-GB">
-    {speech}
-  </Say>
-</Response>"""
-
-    return Response(xml, mimetype='text/xml')
-
-@app.route("/handle-source", methods=["POST"])
-def handle_source():
-    digit = request.form.get("Digits")
-    if digit not in SOURCES:
-        return Response("""<Response><Say voice="Polly.Amy" language="en-GB">Invalid choice. Goodbye.</Say></Response>""", mimetype="text/xml")
-    
-    # Ask if user wants descriptions
-    prompt = f"""
-    <Response>
-        <Gather numDigits="1" action="/read-news?src={digit}" method="POST">
-            <Say voice="Polly.Amy" language="en-GB">
-                You selected {SOURCES[digit][0]}.
-                Press 1 for headlines only.
-                Press 2 for headlines with descriptions.
-            </Say>
-        </Gather>
-        <Say voice="Polly.Amy" language="en-GB">We didn't receive any input. Goodbye.</Say>
-    </Response>
-    """
-    return Response(prompt, mimetype="text/xml")
-
-@app.route("/read-news", methods=["POST"])
-def read_news():
-    digit = request.args.get("src")
-    with_desc = request.form.get("Digits") == "2"
-
-    name, url = SOURCES.get(digit, ("Unknown", None))
-    speech = f"<s>{name}</s>"
-
-    try:
-        rss = requests.get(url, timeout=5)
-        root = ET.fromstring(rss.content)
-        items = root.findall(".//item")[:10]
-
-        for item in items:
-            title = item.find("title").text or ""
-            desc = item.find("description").text or ""
-            desc = desc.replace("&nbsp;", " ").replace("&amp;", "and")
-            segment = f"<s>{title}</s>"
-            if with_desc:
-                segment += f"<break time='300ms'/><s>{desc}</s>"
-            speech += segment + "<break time='600ms'/>"
-    except Exception as e:
-        print("News error:", e)
-        speech = "<s>Sorry, that feed could not be loaded.</s>"
-
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="Polly.Amy" language="en-GB">
-    <speak>
-      <prosody rate="slow">
+    <Say language="en-GB">
         {speech}
-      </prosody>
-    </speak>
-  </Say>
+    </Say>
 </Response>"""
 
-    return Response(xml, mimetype='text/xml')
+    return Response(xml, mimetype="text/xml")
 
-# For Render or Replit deployment
+# Ensure it works on Render or Replit
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
