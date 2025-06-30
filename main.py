@@ -60,7 +60,13 @@ def read_news():
     speech_lines = [f"You selected {name}. Here are the latest headlines."]
 
     try:
-        rss = requests.get(url, timeout=5)
+        headers = {"User-Agent": "Mozilla/5.0"}  # Some sites block Python requests
+        rss = requests.get(url, headers=headers, timeout=5)
+
+        # Check if it even looks like XML
+        if not rss.content.strip().startswith(b"<?xml"):
+            raise ValueError("Invalid RSS format")
+
         root = ET.fromstring(rss.content)
         items = root.findall(".//item")[:10]
 
@@ -71,18 +77,17 @@ def read_news():
             except:
                 continue
 
-            # Clean & format
             title = title.replace("&", "and").strip()
             desc = desc.replace("&", "and").strip()
             segment = title
             if with_desc:
                 segment += ". " + desc
             speech_lines.append(segment)
+
     except Exception as e:
         print("News error:", e)
         speech_lines = ["Sorry, the news feed could not be loaded."]
 
-    # Join headlines with pauses (via punctuation)
     speech = ".  ".join(speech_lines)
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
