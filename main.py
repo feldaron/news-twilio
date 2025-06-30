@@ -10,7 +10,7 @@ SOURCES = {
     "1": ("BBC News", "http://feeds.bbci.co.uk/news/rss.xml"),
     "2": ("The Guardian", "https://www.theguardian.com/uk/rss"),
     "3": ("Sky News", "https://feeds.skynews.com/feeds/rss/home.xml"),
-    "4": ("Ynet News", "https://www.ynetnews.com/category/3082/rss")
+    "4": ("Times of Israel", "https://www.timesofisrael.com/feed/")
 }
 
 @app.route("/voice", methods=["GET", "POST"])
@@ -23,7 +23,7 @@ def voice():
                 Press 1 for BBC News.
                 Press 2 for the Guardian.
                 Press 3 for Sky News.
-                Press 4 for Ynet News.
+                Press 4 for the Times of Israel.
             </Say>
         </Gather>
         <Say language="en-GB">We didn't receive any input. Goodbye.</Say>
