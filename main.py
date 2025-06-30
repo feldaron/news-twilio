@@ -60,10 +60,12 @@ def read_news():
     speech_lines = [f"You selected {name}. Here are the latest headlines."]
 
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}  # Some sites block Python requests
+        headers = {"User-Agent": "Mozilla/5.0"}
         rss = requests.get(url, headers=headers, timeout=5)
 
-        # Check if it even looks like XML
+        # Print the first 300 bytes for debugging
+        print("RSS snippet:", rss.content[:300])
+
         if not rss.content.strip().startswith(b"<?xml"):
             raise ValueError("Invalid RSS format")
 
@@ -71,12 +73,8 @@ def read_news():
         items = root.findall(".//item")[:10]
 
         for item in items:
-            try:
-                title = item.find("title").text or ""
-                desc = item.find("description").text or ""
-            except:
-                continue
-
+            title = item.find("title").text or ""
+            desc = item.find("description").text or ""
             title = title.replace("&", "and").strip()
             desc = desc.replace("&", "and").strip()
             segment = title
